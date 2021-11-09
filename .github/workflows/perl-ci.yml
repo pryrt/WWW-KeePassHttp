@@ -60,7 +60,12 @@ jobs:
       - name: cpanm test-only
         run: |
           cpanm --test-only --verbose --no-interactive .
-          #${{ ( startsWith(matrix.os, 'windows') && 'Get-ChildItem -Recurse') || 'ls -latrR' }}
+      - name: verbose prove (for debug)
+        run: |
+          prove -vl t
+      #- name: final directory listing
+      #  run: |
+      #    ${{ ( startsWith(matrix.os, 'windows') && 'Get-ChildItem -Recurse') || 'ls -latrR' }}
       #- name: Archive artifacts for this push
       #  uses: actions/upload-artifact@v2
       #  with:
