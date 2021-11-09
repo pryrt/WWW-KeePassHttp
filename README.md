@@ -10,6 +10,10 @@ WWW::KeePassHttp - Interface with KeePass PasswordSafe through the KeePassHttp p
 
 Interface with KeePass PasswordSafe through the KeePassHttp plugin.  Allows reading entries based on URL or TITLE.  Maybe will allow creating a new entry as well.
 
+## REQUIREMENTS
+
+You need to have KeePass (or compatible) on your system, with the KeePassHttp plugin installed.
+
 # AUTHOR
 
 Peter C. Jones `<petercj AT cpan DOT org>`
