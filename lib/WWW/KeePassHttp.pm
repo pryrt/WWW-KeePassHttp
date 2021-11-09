@@ -1,6 +1,11 @@
-package KeePassHttp;
+package WWW::KeePassHttp;
 use 5.012;  # //, strict, s//r
 use warnings;
+
+use MIME::Base64;
+use Crypt::Mode::CBC;
+use HTTP::Tiny;
+use JSON;   # will use JSON::XS when available
 
 our $VERSION = '0.000001';  # rrr.mmmsss : rrr is major revision; mmm is minor revision; sss is sub-revision (new feature path or bugfix); optionally use _sss instead, for alpha sub-releases
 
@@ -41,7 +46,21 @@ The options align with the Configuration methods that follow.
 
 sub new
 {
-    1;
+    my ($class, %opts) = @_;
+    my $self = bless {}, $class;
+
+    # user agent and URL
+    $opts{keep_alive} //= 1;                        # default to keep_alive
+    $self->{ua} = HTTP::Tiny->new(keep_alive => $opts{keep_alive} );
+
+    $self->{request_base} = $opts{request_url} // 'http://localhost';   # default to localhost
+    $self->{request_port} = $opts{request_port} // 19455;               # default to 19455
+    $self->{request_url} = $self->{request_base} . ':' . $self->{request_port};
+
+    # encryption object
+    $self->{cbc} = Crypt::Mode::CBC->new('AES');
+
+    return $self;
 }
 
 =item host

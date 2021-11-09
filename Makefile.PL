@@ -7,13 +7,18 @@ use ExtUtils::MakeMaker;
     'VERSION_FROM'  => 'lib/WWW/KeePassHttp.pm',
     'ABSTRACT_FROM' => 'lib/WWW/KeePassHttp.pm',
     'PREREQ_PM'     => {
-        'Exporter'          => 5.57,    # needed for `use Exporter qw(import);` notation
-        'version'           => 0.77,
-        'warnings'          => 0,
-        'strict'            => 0,
-        'constant'          => 0,
-        'Carp'              => 0,
-        'Encode'            => 0,
+        'Exporter'              => 5.57,    # needed for `use Exporter qw(import);` notation
+        'version'               => 0.77,
+        'warnings'              => 0,
+        'strict'                => 0,
+        'constant'              => 0,
+        'Carp'                  => 0,
+        'Encode'                => 0,
+        'MIME::Base64'          => 0,
+        'Crypt::Mode::CBC'      => 0,
+        #'Math::Random::Secure'  => 0, # not installing well
+        'HTTP::Tiny'            => 0,
+        'JSON'                  => 0,
     },
     'realclean'     => {
         FILES => 'cover_db LICENSE.pod README.pod MYMETA.json.lock',
@@ -51,6 +56,7 @@ use ExtUtils::MakeMaker;
         'strict' => 0,
         'Test::More' => 0.86,
         'Test::Exception' => 0,
+        'Test::MockObject' => 0,
         'constant' => 0,
         'Config' => 0,
     },
@@ -80,13 +86,18 @@ use ExtUtils::MakeMaker;
         delete $mm_args{MIN_PERL_VERSION};
     }
     if( $ExtUtils::MakeMaker::VERSION < '6.52' ) {
+        $mm_args{PREREQ_PM} = (
+            $mm_args{TEST_REQUIRES},
+            $mm_args{CONFIGURE_REQUIRES},
+            $mm_args{PREREQ_PM},
+        ) if exists $mm_args{PREREQ_PM};            # merge TEST and CONFIG into PREREQ
         delete $mm_args{CONFIGURE_REQUIRES};
     }
     if( $ExtUtils::MakeMaker::VERSION < '6.64' ) {
         $mm_args{CONFIGURE_REQUIRES} = (
+            $mm_args{TEST_REQUIRES},
             $mm_args{CONFIGURE_REQUIRES},
-            $mm_args{TEST_REQUIRES}
-        ) if exists $mm_args{CONFIGURE_REQUIRES};
+        ) if exists $mm_args{CONFIGURE_REQUIRES};   # merge TEST into CONFIG
         delete $mm_args{TEST_REQUIRES};
     }
     if( $ExtUtils::MakeMaker::VERSION >= '6.18' ) {
