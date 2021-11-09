@@ -1,7 +1,6 @@
 package KeePassHttp;
 use 5.012;  # //, strict, s//r
 use warnings;
-use Exporter 5.57 'import';
 
 our $VERSION = '0.000001';  # rrr.mmmsss : rrr is major revision; mmm is minor revision; sss is sub-revision (new feature path or bugfix); optionally use _sss instead, for alpha sub-releases
 
@@ -24,9 +23,74 @@ Interface with KeePass PasswordSafe through the KeePassHttp plugin.  Allows read
 
 You need to have KeePass (or compatible) on your system, with the KeePassHttp plugin installed.
 
+=head1 INTERFACE
 
+=head2 Constructor and Configuration
+
+=over
+
+=item new
+
+    my $kph = WWW::KeePassHttp->new(%options);
+
+Creates a new KeePassHttp connection, and sets up the AES encryption.
+
+The options align with the Configuration methods that follow.
 
 =cut
+
+sub new
+{
+    1;
+}
+
+=item host
+
+    %options = ( ...,  host => 'localhost', ... );
+        or
+    $kph->host('127.0.0.1');
+
+Changes the host: the KeePassHttp plugin defaults to C<localhost>, but can be configured differently, so you will need to make your object match your plugin settings.
+
+=cut
+
+sub host
+{
+    1;
+}
+
+=item port
+
+    %options = ( ...,  port => 19455, ... );
+        or
+    $kph->port(19455);
+
+Changes the port: the KeePassHttp plugin defaults to port 19455, but can be configured differently, so you will need to make your object match your plugin settings.
+
+=cut
+
+sub port
+{
+    1;
+}
+
+=item ...
+
+=back
+
+=cut
+
+=head1 SEE ALSO
+
+=over
+
+=item * L<KeePass Plugins list|https://keepass.info/plugins.html>
+
+=item * L<KeePassHttp Plugin home|https://github.com/pfn/keepasshttp/>
+
+=item * L<WWW::KeePassRest> = A similar interface which uses the KeePassRest plugin to interface with KeePass
+
+=back
 
 =head1 AUTHOR
 
@@ -57,8 +121,5 @@ by the Free Software Foundation; or the Artistic License.
 See L<http://dev.perl.org/licenses/> for more information.
 
 =cut
-
-1;
-
 
 1;
