@@ -1,5 +1,4 @@
 use ExtUtils::MakeMaker;
-use 5.010;
 # See lib/ExtUtils/MakeMaker.pm for details of how to influence
 # the contents of the Makefile that is written.
 %mm_args = (
@@ -18,30 +17,51 @@ use 5.010;
     },
     'realclean'     => {
         FILES => 'cover_db LICENSE.pod README.pod MYMETA.json.lock',
-    }
+    },
+    'META_MERGE'    => {            # EUMM 6.46
+        'meta-spec' => {
+            version => '2',
+            url     => 'http://search.cpan.org/perldoc?CPAN::Meta::Spec',
+        },
+        resources => {
+            bugtracker => {
+                web     => 'https://github.com/pryrt/WWW-KeePassHttp/issues',
+            },
+            repository => {
+                url     => 'https://github.com/pryrt/WWW-KeePassHttp.git',
+                web     => 'https://github.com/pryrt/WWW-KeePassHttp',
+                type    => 'git',
+            },
+        },
+        keywords => [ 'KeePass', 'KeePassHttp'],
+    },
+    'LICENSE' => 'perl_5',          # EUMM 6.31
+    'MIN_PERL_VERSION' => '5.12.0', # EUMM 6.48
+    'CONFIGURE_REQUIRES' => {       # EUMM 6.52
+        'ExtUtils::MakeMaker' => '6.52',
+        'warnings' => 0,
+        'strict' => 0,
+        'Test::More' => 0.86,
+        'Test::Exception' => 0,
+        'constant' => 0,
+        'Config' => 0,
+    },
+    'TEST_REQUIRES' => {            # EUMM 6.64
+        'warnings' => 0,
+        'strict' => 0,
+        'Test::More' => 0.86,
+        'Test::Exception' => 0,
+        'constant' => 0,
+        'Config' => 0,
+    },
 );
 
 {
+    # in most cases, delete from %mm_args rather than adding to the hash like I used to do
     no warnings;
-    if( $ExtUtils::MakeMaker::VERSION >= '6.46' ) {
-        $mm_args{META_MERGE} = {
-            'meta-spec' => {
-                version => '2',
-                url     => 'http://search.cpan.org/perldoc?CPAN::Meta::Spec',
-            },
-            resources => {
-                bugtracker => {
-                    mailto  => 'bug-WWW-KeePassHttp@rt.cpan.org',
-                    web     => 'https://github.com/pryrt/WWW-KeePassHttp/issues',
-                },
-                repository => {
-                    url     => 'https://github.com/pryrt/WWW-KeePassHttp.git',
-                    web     => 'https://github.com/pryrt/WWW-KeePassHttp',
-                    type    => 'git',
-                },
-            },
-            keywords => [ 'Notepad++', 'automation'],
-        };
+    if( $ExtUtils::MakeMaker::VERSION < '6.46' ) {
+        delete $mm_args{META_MERGE};
+    } else {
         # automatically determine the versions for 'provides'; MM->parse_version exists as of MM v6.31, so not a problem with >= 6.46
         #   => this comes out right when printed... but MYMETA.* shows values that look wrong
         my $v = MM->parse_version( $mm_args{VERSION_FROM} );
@@ -50,50 +70,24 @@ use 5.010;
                 file => 'lib/WWW/KeePassHttp.pm',
                 version => $v,
             },
-            'WWW::KeePassHttp::Notepad' => {
-                file => 'lib/WWW/KeePassHttp/Notepad.pm',
-                version => $v,
-            },
-            'WWW::KeePassHttp::Editor' => {
-                file => 'lib/WWW/KeePassHttp/Editor.pm',
-                version => $v,
-            }
         };
     }
-    if( $ExtUtils::MakeMaker::VERSION >= '6.31' ) {
-        $mm_args{LICENSE} = 'perl_5';
+
+    if( $ExtUtils::MakeMaker::VERSION < '6.31' ) {
+        delete $mm_args{LICENSE};
     }
-    if( $ExtUtils::MakeMaker::VERSION >= '6.48' ) {
-        $mm_args{MIN_PERL_VERSION} = '5.10.0';
+    if( $ExtUtils::MakeMaker::VERSION < '6.48' ) {
+        delete $mm_args{MIN_PERL_VERSION};
     }
-    if( $ExtUtils::MakeMaker::VERSION >= '6.52' ) {
-        $mm_args{CONFIGURE_REQUIRES} = {
-            'ExtUtils::MakeMaker' => '6.52',
-            'warnings' => 0,
-            'strict' => 0,
-            'Test::More' => 0.86,
-            'Test::Exception' => 0,
-            'constant' => 0,
-            'Config' => 0,
-            'Win32' => 0,
-            'FindBin' => 1.49, # the version released with perl v5.10
-        };
+    if( $ExtUtils::MakeMaker::VERSION < '6.52' ) {
+        delete $mm_args{CONFIGURE_REQUIRES};
     }
-    if( $ExtUtils::MakeMaker::VERSION >= '6.64' ) {
-        $mm_args{TEST_REQUIRES} = {
-            'warnings' => 0,
-            'strict' => 0,
-            'Test::More' => 0.86,
-            'Test::Exception' => 0,
-            'constant' => 0,
-            'Config' => 0,
-            'Path::Tiny' => 0.058,          # 0.018 needed for rootdir and cwd; 0.058 needed for sibling
-            'Win32' => 0,
-            'Win32::API' => 0,
-            'Win32::GuiTest'    => 1.64,    # version needed for 64-bit ::SendMessage retval
-            'Encode' => 0,
-            'FindBin' => 1.49,              # the version released with perl v5.10
-        };
+    if( $ExtUtils::MakeMaker::VERSION < '6.64' ) {
+        $mm_args{CONFIGURE_REQUIRES} = (
+            $mm_args{CONFIGURE_REQUIRES},
+            $mm_args{TEST_REQUIRES}
+        ) if exists $mm_args{CONFIGURE_REQUIRES};
+        delete $mm_args{TEST_REQUIRES};
     }
     if( $ExtUtils::MakeMaker::VERSION >= '6.18' ) {
         $mm_args{SIGN} = 1 if MM->can('signature_target') && $ENV{MM_SIGN_DIST};
@@ -122,7 +116,7 @@ distauthtest :: disttest
 
 # veryclean: runs realclean, then deletes .bak, .old, .orig, and similar
 # addition to realclean: also delete coverage database, if testcover was run
-#replace the realclean :: with realclean => {FILES => 'space sep list of files and dirs'} in the hash
+# to add to realclean target:: realclean => {FILES => 'space sep list of files and dirs'} in the hash
 
 # auto-populate the VERSION in the submodules from $(VERSION), which comes from main module
 populateversion :: lib/WWW/KeePassHttp.pm
