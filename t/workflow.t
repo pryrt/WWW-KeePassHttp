@@ -2,11 +2,46 @@
 #
 use 5.012; # strict, //
 use warnings;
-use Test::More tests=>2;
+use Test::More;
+use MIME::Base64;
 
-use_ok('WWW::KeePassHttp');
+use WWW::KeePassHttp;
 
-diag my $ossl = ($^X =~ s/perl.bin.perl.exe//ir =~ s{\\}{/}gir) . 'c/bin/openssl.exe';
-ok -f $ossl, $ossl;
+# NOTE: this key is used for testing (it was the key used in the example at https://github.com/pfn/keepasshttp/)
+#   it is NOT the value you should use for your key in the real application
+#   In a real application, you must generate a 256-bit cryptographically secure key,
+#   using something like Math::Random::Secure or Crypt::Random,
+#   or use `openssl enc -aes-256-cbc -k secret -P -md sha256 -pbkdf2 -iter 100000`
+#       and convert the 64 hex nibbles to a key using pack 'H*', $sixtyfournibbles
+my $key = decode_base64('CRyXRbH9vBkdPrkdm52S3bTG2rGtnYuyJttk/mlJ15g=');
+
+# start by intializing the kph object with your key
+my $kph = WWW::KeePassHttp->new(Key => $key);
+isa_ok $kph, 'WWW::KeePassHttp', 'created interface';
+
+
+local $TODO = 'methods not yet implemented';
+# verify that the association idiom works correctly:
+#   $kph->associate unless $kph->test_associate
+#
+# To test this, run the line twice, but store the extra return values
+#   the first time, it should test1 false and then run the association
+#   the second time, it should test2 true and _not_ run the association again
+my ($test1, $assoc1, $test2, $assoc2);
+$assoc1 = $kph->associate() unless $test1 = $kph->test_associate();
+$assoc2 = $kph->associate() unless $test2 = $kph->test_associate();
+ok !$test1, 'test1 should return false';
+isa_ok $assoc1, 'HASH', 'assoc1';
+is $test2, 'test2 shuold return true';
+is $assoc2, undef, 'assoc2 should not be set, so should still be undef';
+# TODO: need to do all the mock counting, etc, to make sure that
+#   correct internal calls worked, and that parameters sent to UA->get were correct
+
+# verify that get_logins does the right internal sequence:
+my $entries = $kph->get_logins('Dummy Name');
+
+
+# TODO: move this test to a separate test file:
+#is length($_), 24, $_ for map { sleep(rand $_); (WWW::KeePassHttp::generate_nonce)[1] } 1..5;
 
 done_testing();

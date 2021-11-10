@@ -16,9 +16,9 @@ use ExtUtils::MakeMaker;
         'Encode'                => 0,
         'MIME::Base64'          => 0,
         'Crypt::Mode::CBC'      => 0,
-        #'Math::Random::Secure'  => 0, # not installing well
         'HTTP::Tiny'            => 0,
         'JSON'                  => 0,
+        'Time::HiRes'           => 0,
     },
     'realclean'     => {
         FILES => 'cover_db LICENSE.pod README.pod MYMETA.json.lock',
