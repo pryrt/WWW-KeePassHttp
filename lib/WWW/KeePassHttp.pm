@@ -92,6 +92,10 @@ sub new
             if length($_) == 44;
         croak "Key not recognized as 256-bit AES";
     }
+    $self->{key64} = encode_base64($self->{key});
+
+    # appid
+    $self->{appid} = $opts{appid} // 'WWW::KeePassHttp';
 
     return $self;
 }
@@ -157,25 +161,54 @@ sub test_associate
 
 =cut
 
-sub associate {}
+sub associate
+{
+    my ($self, %args) = @_;
+    my $content = $self->request('associate', Key64 => $self->{key64}, %args);
+    croak ("Wrong ID: ", $dumpfn->( { wrong_id => $content//'<undef>' } )) unless $self->{appid} eq ($content->{Id}//'<undef>');
+    return $content;
+}
 
 =item get_logins
 
 =cut
 
-sub get_logins {}
+sub get_logins
+{
+    my ($self, $search_term, %args) = @_;
+    $args{Url} = $search_term;
+    $args{SubmitUrl} = $self->{appid} unless exists $args{SubmitUrl};   # "SubmitUrl" is actually the name of the requestor; in the browser->keePassHttp interface, the requestor is the website requesting the password; but here, I am using it as the app identifier
+    my $content = $self->request('get-logins', Url => $search_term, %args);
+    return [] unless $content->{Count};
+    my $entries = $content->{Entries};
+    for my $entry ( @$entries ) {
+        for my $k ( sort keys %$entry ) {
+            $entry->{$k} = $self->{cbc}->decrypt( decode_base64($entry->{$k}), $self->{key}, decode_base64($content->{Nonce}));
+        }
+    }
+    #$dumpfn->( { Entries => $entries } );
+    return $entries;
+}
 
 =item get_logins_count
 
 =cut
 
-sub get_logins_count {}
+sub get_logins_count
+{
+    my ($self, %args) = @_;
+}
+
 
 =item set_login
 
 =cut
 
-sub set_login {}
+sub set_login
+{
+    my ($self, %args) = @_;
+}
+
 
 =item request
 
@@ -215,40 +248,42 @@ sub request {
     my %request = (
         RequestType => $type,
         TriggerUnlock => JSON::false,
-        Id => 'comets.keepalive',
+        Id => $self->{appid},
         Nonce => $nonce,
         Verifier => encode_base64($self->{cbc}->encrypt($nonce, $self->{key}, $iv), ''),
     );
 
     # don't want to encrypt the key during an association request
-    $request{Key} = delete $params{Key} if( exists $params{Key} );
+    delete $params{Key};    # only allow Key64
+    $request{Key} = delete $params{Key64} if( exists $params{Key64} );
 
     # encrypt all remaining parameter values
     while(my ($k,$v) = each %params) {
         $request{$k} = encode_base64($self->{cbc}->encrypt($v, $self->{key}, $iv), '');
     }
-    #dd { my_request => \%request };
+    #$dumpfn->({final_request => \%request});
 
     # send the request
     my $response = $self->{ua}->get($self->{request_url}, {content=> encode_json \%request});
 
     # error checking
-    die $dumpfn->( { request_error => $response } ) unless $response->{success};
-    die $dumpfn->( { no_json => $response } ) unless exists $response->{content};
+    croak $dumpfn->( { request_error => $response } ) unless $response->{success};
+    croak $dumpfn->( { no_json => $response } ) unless exists $response->{content};
 
     # get the JSON
     my $content = decode_json $response->{content};
-    #d { their_content => $content };
+    $dumpfn->( { their_content => $content } );
 
     # verification before returning the content -- if their verifier doesn't match their nonce,
     #   then we don't have secure communication
-    if($type ne 'test-associate' or exists $content->{Verifier}) { # don't need to check on the first test-associate
-
-        die $dumpfn->(  { missing_verifier => $content } ) unless exists $content->{Nonce} and exists $content->{Verifier};
+    #   Don't need to check on test-associate/associate if verifier is missing, because there can
+    #   reasonably be no verifier on those (ie, when test-associate returns false, or when the associate fails)
+    if(exists $content->{Verifier} or ($type ne 'test-associate' and $type ne 'associate')) {
+        croak $dumpfn->(  { missing_verifier => $content } ) unless exists $content->{Nonce} and exists $content->{Verifier};
         my $their_iv = decode_base64($content->{Nonce});
         my $decode_their_verifier = $self->{cbc}->decrypt( decode_base64($content->{Verifier}), $self->{key}, $their_iv );
         if( $decode_their_verifier ne $content->{Nonce} ) {
-            die $dumpfn->( { "Decoded Verifier $decode_their_verifier" => $content } );
+            croak $dumpfn->( { "Decoded Verifier $decode_their_verifier" => $content } );
         }
     }
 

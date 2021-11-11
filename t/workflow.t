@@ -24,22 +24,21 @@ local $TODO = 'methods not yet implemented';
 # verify that the association idiom works correctly:
 #   $kph->associate unless $kph->test_associate
 #
-# To test this, run the line twice, but store the extra return values
-#   the first time, it should test1 false and then run the association
-#   the second time, it should test2 true and _not_ run the association again
-my ($test1, $assoc1, $test2, $assoc2);
+# To test this, run the idiom once, storing the extra return values
+#   => it should test1 false and then run the association
+#   the second time, just run the test-association, which should test2 true
+my ($test1, $assoc1, $test2);
 $assoc1 = $kph->associate() unless $test1 = $kph->test_associate();
-$assoc2 = $kph->associate() unless $test2 = $kph->test_associate();
+$test2 = $kph->test_associate();
 ok !$test1, 'test1 should return false';
 isa_ok $assoc1, 'HASH', 'assoc1';
-is $test2, 'test2 shuold return true';
-is $assoc2, undef, 'assoc2 should not be set, so should still be undef';
+ok $test2, 'test2 shuold return true';
 # TODO: need to do all the mock counting, etc, to make sure that
 #   correct internal calls worked, and that parameters sent to UA->get were correct
 
 # verify that get_logins does the right internal sequence:
 my $entries = $kph->get_logins('Dummy Name');
-
+diag "get_logins => ", explain $entries;
 
 # TODO: move this test to a separate test file:
 #is length($_), 24, $_ for map { sleep(rand $_); (WWW::KeePassHttp::generate_nonce)[1] } 1..5;
