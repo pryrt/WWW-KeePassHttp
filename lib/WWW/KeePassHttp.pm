@@ -92,12 +92,32 @@ sub new
             if length($_) == 44;
         croak "Key not recognized as 256-bit AES";
     }
-    $self->{key64} = encode_base64($self->{key});
+    $self->{key64} = encode_base64($self->{key}, '');
 
     # appid
     $self->{appid} = $opts{appid} // 'WWW::KeePassHttp';
 
     return $self;
+}
+
+=item appid
+
+    %options = ( ...,  appid => 'name of your app', ... );
+        or
+    $kph->appid('name of your app');
+
+Changes the appid, which is the name that is used to map your
+application with the stored key in the KeePassHttp settings in
+KeePass.
+
+If not defined in the initial options or via this method,
+the module will use a default appid of C<WWW::KeePassHttp>.
+
+=cut
+
+sub appid
+{
+    1;
 }
 
 =item host
@@ -146,6 +166,12 @@ These methods implement the L<KeePassHttp plugin's commmunication protocol|https
 
     $kph->associate unless $kph->test_associate();
 
+Sends the C<test-assocate> request to the KeePassHttp server,
+which is used to see whether or not your application has been
+associated with the KeePassHttp plugin or not.  Returns a true
+value if your application is already associated, or a false
+value otherwise.
+
 =cut
 
 sub test_associate
@@ -159,6 +185,37 @@ sub test_associate
 
     $kph->associate unless $kph->test_associate();
 
+Sends the C<assocate> request to the KeePassHttp server,
+which is used to give your application's key to the KeePassHttp
+plugin.
+
+When this request is received, KeePass will pop up a dialog
+asking for a name -- this name should match the C<appid> value
+that you defined for the C<$kph> instance.  All requests sent
+to the plugin will include this C<appid> so that KeePassHttp can
+look up your application's key, so it must match exactly.
+As per the C<KeePassHttp plugin docs|https://github.com/pfn/keepasshttp/>,
+the server saves your application's key in the C<KeePassHttp Settings>
+entry, in the B<Advanced E<gt> String Fields> with a name of
+C<AES Key: XXXX>, where C<XXXX> is the name you type in the dialog
+box (which needs to match your C<appid>).
+
+B<Please note>: this C<associate> communication is insecure,
+since KeePassHttp plugin is not using HTTPS.  Every other
+communication between your application and the plugin uses the
+key (which both your application and the plugin know) to
+encrypt the critical data (usernames, passwords, titles, etc),
+and is thus secure;
+but the C<associate> interaction, because it happens before
+the plugin has your key, by its nature cannot be encrypted by
+that key, so it sends the encoded key I<unencrypted>.  If this
+worries you, I suggest that you manually insert the key: do an
+C<assocate> once with a dummy key, then manually overwrite the
+encoded key that it stores with the encoded version of your real
+key.  (This limitation is due to the design of the KeePassHttp
+plugin and its protocol for the C<associate> command, not due
+to the wrapper around that protocol that this module implements.)
+
 =cut
 
 sub associate
@@ -170,6 +227,22 @@ sub associate
 }
 
 =item get_logins
+
+    my $entries = $kph->get_logins($search_string);
+    print "$_ => $entries->[0]{$_}\n" for qw/Name Login Password/;
+
+Sends the C<get-logins> request, which returns the Name,
+Login, and Password for each of the matching entries.
+
+C<$entries> is an AoH structure: it is an array reference,
+and each element of that array is a hash reference; each
+referenced hash includes Name, Login, and Password entries.
+
+The rules for the matching of the search string are defined in the
+L<KeePassHttp plugin documentation|https://github.com/pfn/keepasshttp/>.
+But, in brief, it will do a fuzzy match on the URL, and an exact match
+on the entry title.  (The plugin was designed to be used for browser plugins
+to request passwords for URLs from KeePass, hence its focus on URLs.)
 
 =cut
 
@@ -192,21 +265,69 @@ sub get_logins
 
 =item get_logins_count
 
+    my $count = $kph->get_logins_count($search_string);
+
+Sends the C<get-logins> request, which returns a count of
+the number of matches for the search string.
+
+The rules for the matching of the search string are defined in the
+L<KeePassHttp plugin documentation|https://github.com/pfn/keepasshttp/>.
+But, in brief, it will do a fuzzy match on the URL, and an exact match
+on the entry title.  (The plugin was designed to be used for browser plugins
+to request passwords for URLs from KeePass, hence its focus on URLs.)
+
+This method is useful when the fuzzy-URL-match might match a large
+number of entries in the database; if after seeing this count, you
+would rather refine your search instead of requesting that many entries,
+this method enables knowing that right away, rather than after you
+accidentally matched virtually every entry in your database by searching
+for C<www>.
+
 =cut
 
 sub get_logins_count
 {
-    my ($self, %args) = @_;
+    my ($self, $search_term, %args) = @_;
+    $args{Url} = $search_term;
+    $args{SubmitUrl} = $self->{appid} unless exists $args{SubmitUrl};   # "SubmitUrl" is actually the name of the requestor; in the browser->keePassHttp interface, the requestor is the website requesting the password; but here, I am using it as the app identifier
+    my $content = $self->request('get-logins-count', Url => $search_term, %args);
+    return $content->{Count};
 }
 
 
 =item set_login
+
+    $kph->set_login( Login => $username, Url => $url_and_title, Password => $password );
+
+Sends the C<set-login> request, which adds a new entry to your
+KeePass database, in the "KeePassHttp Passwords" group (folder).
+
+As far as I know, the plugin doesn't allow choosing a different group
+for your entry.  The plugin uses the URL that you supply as both the
+entry title and the URL field in that entry.  (Once again, the plugin
+was designed around browser password needs, and thus is URL-focused).
+I don't know if that's a deficiency in the plugin's implementation,
+or just its documentation, or my interpretation of that documentation.
+
+The arguments to the method define the C<Login> (username), C<Url> (for
+entry title and URL field), and C<Password> (secret value) for the new
+entry.  All three of those parameters are required by the protocol, and
+thus by this method.
+
+If you would prefer not to give one or more of those parameters a value,
+just pass an empty string.  You could afterword then manually access
+your KeePass database and edit the entry yourself.
 
 =cut
 
 sub set_login
 {
     my ($self, %args) = @_;
+    croak "set_login(): missing Login parameter" unless defined $args{Login};
+    croak "set_login(): missing Url parameter" unless defined $args{Url};
+    croak "set_login(): missing Password parameter" unless defined $args{Password};
+    my $content = $self->request('set-login', %args);
+    return $content->{Success};
 }
 
 
@@ -247,7 +368,7 @@ sub request {
     # these are required in every request
     my %request = (
         RequestType => $type,
-        TriggerUnlock => JSON::false,
+        TriggerUnlock => JSON::true, # was intended for TRUE to request that KeePass unlock, but that doesn't actually happen
         Id => $self->{appid},
         Nonce => $nonce,
         Verifier => encode_base64($self->{cbc}->encrypt($nonce, $self->{key}, $iv), ''),
@@ -261,7 +382,7 @@ sub request {
     while(my ($k,$v) = each %params) {
         $request{$k} = encode_base64($self->{cbc}->encrypt($v, $self->{key}, $iv), '');
     }
-    #$dumpfn->({final_request => \%request});
+    $dumpfn->({final_request => \%request});
 
     # send the request
     my $response = $self->{ua}->get($self->{request_url}, {content=> encode_json \%request});
@@ -346,6 +467,20 @@ sub generate_nonce
 =item * L<WWW::KeePassRest> = A similar interface which uses the KeePassRest plugin to interface with KeePass
 
 =back
+
+=head1 ACKNOWLEDGEMENTS
+
+Thank you to L<KeePass|https://keepass.info/> for providing a free
+password manager with plugin capability.
+
+Thank you to the L<KeePassHttp Plugin|https://github.com/pfn/keepasshttp/>
+for providing a free and open source plugin which allows for easy
+communication between an external application and the KeePass application,
+enabling the existence of this module (and the ability for it to give
+applications access to the passwords stored in KeePass).
+
+This module and author are not affiliated with either KeePass or KeePassHttp
+except as a user of those fine products.
 
 =head1 AUTHOR
 
