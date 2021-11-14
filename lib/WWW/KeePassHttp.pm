@@ -382,7 +382,7 @@ sub request {
     while(my ($k,$v) = each %params) {
         $request{$k} = encode_base64($self->{cbc}->encrypt($v, $self->{key}, $iv), '');
     }
-    $dumpfn->({final_request => \%request});
+    #$dumpfn->({final_request => \%request});
 
     # send the request
     my $response = $self->{ua}->get($self->{request_url}, {content=> encode_json \%request});
@@ -393,7 +393,7 @@ sub request {
 
     # get the JSON
     my $content = decode_json $response->{content};
-    $dumpfn->( { their_content => $content } );
+    #$dumpfn->( { their_response => $response, their_content => $content } );
 
     # verification before returning the content -- if their verifier doesn't match their nonce,
     #   then we don't have secure communication
