@@ -50,4 +50,11 @@ is $kph->{request_base}, 'http://127.0.0.1', 'config request_base override (part
 is $kph->{request_port}, '19455', 'config request_port default (partial override port)';
 is $kph->{request_url}, 'http://127.0.0.1:19455', 'config request_url result (partial override port)';
 
-done_testing(17);
+# keep alive
+$kph = WWW::KeePassHttp->new( Key => $key, keep_alive => 0 );
+is $kph->{ua}->{keep_alive}, 0, 'constructor: override keep_alive 0';
+$kph = WWW::KeePassHttp->new( Key => $key, keep_alive => 1 );
+is $kph->{ua}->{keep_alive}, 1, 'constructor: override keep_alive 1';
+
+
+done_testing(19);
