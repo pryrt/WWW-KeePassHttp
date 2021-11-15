@@ -82,7 +82,7 @@ sub new
 
     # encryption object
     $self->{cbc} = Crypt::Mode::CBC->new('AES');
-    $self->{key} = $opts{Key} // croak "256-bit AES key is required";
+    $self->{key} = $opts{Key} // croak "256-bit AES key is required";   # cannot cover croak==true, don't know how to tell Devel::Cover this
     for($self->{key}) {
         last if length($_) == 32;   # a 32-octet string is assumed to be a valid key
         chomp;
