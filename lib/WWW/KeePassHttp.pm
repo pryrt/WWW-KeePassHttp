@@ -18,10 +18,10 @@ BEGIN {
         require Data::Dump;
         $dumpfn = \&Data::Dump::dump;
         1;
-    } or eval {
-        require Data::Dumper;
-        $dumpfn = \&Data::Dumper::Dumper;
-        1;
+    } or eval {                             # uncoverable branch false
+        require Data::Dumper;               # uncoverable statement
+        $dumpfn = \&Data::Dumper::Dumper;   # uncoverable statement
+        1;                                  # uncoverable statement
     }
 }
 
@@ -76,7 +76,7 @@ sub new
     $opts{keep_alive} //= 1;                        # default to keep_alive
     $self->{ua} = HTTP::Tiny->new(keep_alive => $opts{keep_alive} );
 
-    $self->{request_base} = $opts{request_url} // 'http://localhost';   # default to localhost
+    $self->{request_base} = $opts{request_base} // 'http://localhost';   # default to localhost
     $self->{request_port} = $opts{request_port} // 19455;               # default to 19455
     $self->{request_url} = $self->{request_base} . ':' . $self->{request_port};
 
@@ -117,37 +117,45 @@ the module will use a default appid of C<WWW::KeePassHttp>.
 
 sub appid
 {
-    1;
+    my ($self, $val) = @_;
+    $self->{appid} = $val if defined $val;
+    return $self->{appid};
 }
 
-=item host
+=item request_base
 
-    %options = ( ...,  host => 'localhost', ... );
+    %options = ( ...,  request_base => 'localhost', ... );
         or
-    $kph->host('127.0.0.1');
+    $kph->request_base('127.0.0.1');
 
-Changes the host: the KeePassHttp plugin defaults to C<localhost>, but can be configured differently, so you will need to make your object match your plugin settings.
+Changes the protocol and host: the KeePassHttp plugin defaults to C<http://localhost>, but can be configured differently, so you will need to make your object match your plugin settings.
 
 =cut
 
-sub host
+sub request_base
 {
-    1;
+    my ($self, $val) = @_;
+    $self->{request_base} = $val if defined $val;
+    $self->{request_url} = $self->{request_base} . ':' . $self->{request_port};
+    return $self->{request_base};
 }
 
-=item port
+=item request_port
 
-    %options = ( ...,  port => 19455, ... );
+    %options = ( ...,  request_port => 19455, ... );
         or
-    $kph->port(19455);
+    $kph->request_port(19455);
 
 Changes the port: the KeePassHttp plugin defaults to port 19455, but can be configured differently, so you will need to make your object match your plugin settings.
 
 =cut
 
-sub port
+sub request_port
 {
-    1;
+    my ($self, $val) = @_;
+    $self->{request_port} = $val if defined $val;
+    $self->{request_url} = $self->{request_base} . ':' . $self->{request_port};
+    return $self->{request_port};
 }
 
 =item ...
