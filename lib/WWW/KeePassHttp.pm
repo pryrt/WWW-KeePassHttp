@@ -82,8 +82,9 @@ sub new
 
     # encryption object
     $self->{cbc} = Crypt::Mode::CBC->new('AES');
-    $self->{key} = $opts{Key} // croak "256-bit AES key is required";   # cannot cover croak==true, don't know how to tell Devel::Cover this
+    $self->{key} = $opts{Key};
     for($self->{key}) {
+        croak "256-bit AES key is required" unless defined $_;
         last if length($_) == 32;   # a 32-octet string is assumed to be a valid key
         chomp;
         croak "256-bit AES key must be in octets, not hex nibbles"
@@ -230,7 +231,7 @@ sub associate
 {
     my ($self, %args) = @_;
     my $content = $self->request('associate', Key64 => $self->{key64}, %args);
-    croak ("Wrong ID: ", $dumpfn->( { wrong_id => $content//'<undef>' } )) unless $self->{appid} eq ($content->{Id}//'<undef>');
+    croak ("Wrong ID: ", $dumpfn->( { wrong_id => $content } )) unless $self->{appid} eq ($content->{Id}//'<undef>');
     return $content;
 }
 
