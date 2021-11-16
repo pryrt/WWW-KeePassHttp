@@ -1,7 +1,16 @@
 CHANGES
+examples/workflow.pl
 lib/WWW/KeePassHttp.pm
 LICENSE
 Makefile.PL
 MANIFEST			This list of files
 README.md
 RELEASE.md
+t/00-load.t
+t/10-obj.t
+t/coverage.t
+t/err-mocked.t
+t/err.t
+t/helper.t
+t/options.t
+t/workflow.t

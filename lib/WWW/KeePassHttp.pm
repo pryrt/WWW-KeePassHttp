@@ -490,10 +490,11 @@ thru the repository's interface at L<https://github.com/pryrt/WWW-KeePassHttp/is
 =begin html
 
 <a href="https://metacpan.org/pod/WWW::KeePassHttp"><img src="https://img.shields.io/cpan/v/WWW-KeePassHttp.svg?colorB=00CC00" alt="" title="metacpan"></a>
-<a href="http://matrix.cpantesters.org/?dist=WWW-KeePassHttp"><img src="http://cpants.cpanauthors.org/dist/WWW-KeePassHttp.png" alt="" title="cpan testers"></a>
+<a href="https://matrix.cpantesters.org/?dist=WWW-KeePassHttp"><img src="https://cpants.cpanauthors.org/dist/WWW-KeePassHttp.png" alt="" title="cpan testers"></a>
 <a href="https://github.com/pryrt/WWW-KeePassHttp/releases"><img src="https://img.shields.io/github/release/pryrt/WWW-KeePassHttp.svg" alt="" title="github release"></a>
 <a href="https://github.com/pryrt/WWW-KeePassHttp/issues"><img src="https://img.shields.io/github/issues/pryrt/WWW-KeePassHttp.svg" alt="" title="issues"></a>
-<a href="https://ci.appveyor.com/project/pryrt/WWW-KeePassHttp"><img src="https://ci.appveyor.com/api/projects/status/6gv0lnwj1t6yaykp/branch/master?svg=true" alt="" title="test coverage"></a>
+<a href="https://coveralls.io/github/pryrt/WWW-KeePassHttp?branch=main"><img src="https://coveralls.io/repos/github/pryrt/WWW-KeePassHttp/badge.svg?branch=main" alt="Coverage Status" /></a>
+<a href="https://github.com/pryrt/WWW-KeePassHttp/actions/"><img src="https://github.com/pryrt/WWW-KeePassHttp/actions/workflows/perl-ci.yml/badge.svg" alt="github perl-ci"></a>
 
 =end html
 

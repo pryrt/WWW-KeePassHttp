@@ -15,8 +15,8 @@ use ExtUtils::MakeMaker;
         'Carp'                  => 0,
         'Encode'                => 0,
         'MIME::Base64'          => 0,
-        'Crypt::Mode::CBC'      => 0,
-        'HTTP::Tiny'            => 0,
+        'Crypt::Mode::CBC'      => 0.003,   # first with Crypt::Mode::CBC in CryptX
+        'HTTP::Tiny'            => 0.041,   # keep_alive
         'JSON'                  => 0,
         'Time::HiRes'           => 0,
     },
