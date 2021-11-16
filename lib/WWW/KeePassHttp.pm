@@ -14,17 +14,8 @@ our $VERSION = '0.000001';  # rrr.mmmsss : rrr is major revision; mmm is minor r
 
 my $dumpfn;
 BEGIN {
-    eval {
-        require Data::Dump;
-        $dumpfn = \&Data::Dump::dump;
-        1;
-    } or eval {                             # uncoverable branch false
-        require Data::Dumper;               # uncoverable statement
-        $dumpfn = \&Data::Dumper::Dumper;   # uncoverable statement
-        1;                                  # uncoverable statement
-    }
+    $dumpfn = sub { JSON->new->utf8->pretty->encode($_[0]) } # hidden from podcheckers and external namespace
 }
-
 
 =pod
 
@@ -158,8 +149,6 @@ sub request_port
     $self->{request_url} = $self->{request_base} . ':' . $self->{request_port};
     return $self->{request_port};
 }
-
-=item ...
 
 =back
 
