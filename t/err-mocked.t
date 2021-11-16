@@ -73,11 +73,11 @@ throws_ok { $kph->associate(); } qr/Wrong ID:/, 'associate error: Wrong App ID';
 throws_ok { $kph->associate(); } qr/Wrong ID:/, 'associate error: missing (ie, undefined) ID';
 
 # verify request() error handling
-throws_ok { $kph->request( 'DNE' ) } qr/\Qrequest_error =>/, 'request error: failed HTTP get()';
-throws_ok { $kph->request( 'DNE' ) } qr/\Qno_json =>/, 'request error: no content (JSON or otherwise) with HTTP reply';
+throws_ok { $kph->request( 'DNE' ) } qr/\Qrequest_error/, 'request error: failed HTTP get()';
+throws_ok { $kph->request( 'DNE' ) } qr/\Qno_json/, 'request error: no content (JSON or otherwise) with HTTP reply';
 throws_ok { $kph->request( 'DNE' ) } qr/\Qmalformed JSON string/, 'request error: content is not JSON string';
-throws_ok { $kph->request( 'DNE' ) } qr/\Qmissing_verifier =>/, 'request error: missing verifier on alternate action';
-throws_ok { $kph->request( 'DNE' ) } qr/\Qmissing_verifier =>/, 'request error: missing nonce on alternate action';
+throws_ok { $kph->request( 'DNE' ) } qr/\Qmissing_verifier/, 'request error: missing verifier on alternate action';
+throws_ok { $kph->request( 'DNE' ) } qr/\Qmissing_verifier/, 'request error: missing nonce on alternate action';
 lives_ok  { $kph->request( 'associate' ) } 'no request error: missing verifier on associate is allowed';
 throws_ok { $kph->request( 'DNE' ) } qr/\QDecoded Verifier/, 'request error: mismatch between nonce and verifier';
 
