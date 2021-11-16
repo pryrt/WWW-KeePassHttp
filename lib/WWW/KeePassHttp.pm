@@ -49,6 +49,7 @@ You need to have KeePass (or compatible) on your system, with the KeePassHttp pl
 =item new
 
     my $kph = WWW::KeePassHttp->new( Key => $key, %options);
+    my $kph = WWW::KeePassHttp->new( Key => $key, keep_alive => 0, %options);
 
 Creates a new KeePassHttp connection, and sets up the AES encryption.
 
@@ -58,8 +59,14 @@ then use C<$key = pack 'H*', $hexnibbles;> to convert it to the value.
 If you have your key as a Base64 string, use
 C<$key = decode_base64($base64string);> to convert it to the value.
 
-The remaining options share the same name and purposes with the
-configuration methods that follow.
+There is also a C<keep_alive> option, which will tell the HTTP user
+agent to keep the connection alive when the option is set to C<1> (or
+when it's not specified); setting the option to a C<0> will disable
+that feature of the user agent.
+
+The C<%options> share the same name and purposes with the
+configuration methods that follow, and can be individually specified in
+the constructor as key/value pairs, or passing in an C<%options> hash.
 
 =cut
 
