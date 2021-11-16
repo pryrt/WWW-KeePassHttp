@@ -6,6 +6,11 @@ WWW::KeePassHttp - Interface with KeePass PasswordSafe through the KeePassHttp p
 
     use WWW::KeePassHttp;
 
+    my $kph = WWW::KeePassHttp->new(Key => $key);
+    $kph->associate() unless $kph->test_associate();
+    my $entries = $kph->get_logins($search_string);
+    print "$_ => $entries->[0]{$_}\n" for qw/Name Login Password/;
+
 # DESCRIPTION
 
 Interface with KeePass PasswordSafe through the KeePassHttp plugin.  Allows reading entries based on URL or TITLE.  Maybe will allow creating a new entry as well.
@@ -13,6 +18,11 @@ Interface with KeePass PasswordSafe through the KeePassHttp plugin.  Allows read
 ## REQUIREMENTS
 
 You need to have KeePass (or compatible) on your system, with the KeePassHttp plugin installed.
+
+# TODO
+
+The entries should be full-fledged objects, with method-based access to
+the underlying Login, Url, and Password values.
 
 # AUTHOR
 
