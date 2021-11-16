@@ -50,6 +50,10 @@ jobs:
           perl -v
           ${{ ( startsWith(matrix.os, 'windows') && '(get-command cpanm).Path' ) || 'which cpanm' }}
           cpanm --version
+      - name: Pre-Makefile.PL prereqs for older perls
+        if: ${{ matrix.perl < '5.14' }}
+        run: |
+            cpanm --notest HTTP::Tiny Crypt::Mode::CBC
       - name: Run Makefile.PL and get prereqs
         # but there might be some modules needed by configure, which makes chicken/egg problem
         run: |
