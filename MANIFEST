@@ -14,3 +14,5 @@ t/err.t
 t/helper.t
 t/options.t
 t/workflow.t
+xt/00-sign.t
+xt/pod-test.t
