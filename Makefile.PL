@@ -139,7 +139,7 @@ populateversion :: lib/WWW/KeePassHttp.pm
 
 # auto-generate the README from the lib/WWW/KeePassHttp.pm
 README.md :: lib/WWW/KeePassHttp.pm Makefile.PL
-	$(PERL) -MPod::Simple::Select -e 'my $$p = Pod::Simple::Select->new();$$p->output_file(qq(README.pod));$$p->select({head1 => [qq(NAME),qq(SYNOPSIS),qq(DESCRIPTION),qq(INSTALLATION),qq(TODO),qq(AUTHOR),qq(COPYRIGHT),qq(LICENSE)]});$$p->parse_file(qq(lib/WWW/KeePassHttp.pm));'
+	$(PERL) -MPod::Simple::Select -e 'my $$p = Pod::Simple::Select->new();$$p->output_file(qq(README.pod));$$p->select({head1 => [qq(NAME),qq(SYNOPSIS),qq(DESCRIPTION),qq(INSTALLATION),qq(AUTHOR),qq(COPYRIGHT),qq(LICENSE)]});$$p->parse_file(qq(lib/WWW/KeePassHttp.pm));'
 	pod2markdown README.pod README.md
 	$(RM_F) README.pod
 
