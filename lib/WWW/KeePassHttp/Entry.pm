@@ -12,11 +12,6 @@ use Carp;
 
 our $VERSION = '0.010';  # rrr.mmmsss : rrr is major revision; mmm is minor revision; sss is sub-revision (new feature path or bugfix); optionally use _sss instead, for alpha sub-releases
 
-my $dumpfn;
-BEGIN {
-    $dumpfn = sub { JSON->new->utf8->pretty->encode($_[0]) } # hidden from podcheckers and external namespace
-}
-
 =pod
 
 =head1 NAME
