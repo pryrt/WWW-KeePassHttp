@@ -33,6 +33,7 @@ WWW::KeePassHttp::Entry - Object-oriented access to an Entry retrived using WWW:
     print $entry[0]->url;
     print $entry[0]->login;
     print $entry[0]->password;
+    print $entry[0]->uuid;
 
 =head1 DESCRIPTION
 
@@ -66,7 +67,7 @@ sub new
     $self->{Url} = $opts{Url}; die "missing Url" unless defined $self->{Url};
     $self->{Login} = $opts{Login}; die "missing Login" unless defined $self->{Login};
     $self->{Password} = $opts{Password}; die "missing Password" unless defined $self->{Password};
-    $self->{Password} = $opts{Uuid} // ''; # Uuid is not required
+    $self->{Uuid} = $opts{Uuid} // ''; # Uuid is not required
 
     return $self;
 }
@@ -80,7 +81,8 @@ sub new
     $entry->url('https://new.url/');    # set new value
 
 The getter/setter for the Url of the Entry.  Due to the nomenclature of the KeePassHttp plugin's
-C<get-logins> structure, the Url can also be accessed as the Name of the entry.
+C<get-logins> structure, the Url can also be accessed as the Name of the entry (since KeePassHttp
+uses the URL for both the URL field and the Title/Name field).
 
 =cut
 
@@ -91,7 +93,7 @@ sub url
     return $self->{Url};
 }
 
-*WWW::KeePassHttp::name = \&WWW::KeePassHttp::url;
+*WWW::KeePassHttp::Entry::name = \&WWW::KeePassHttp::Entry::url;
 
 =item login
 

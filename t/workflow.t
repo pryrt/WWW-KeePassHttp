@@ -114,9 +114,11 @@ $mock->clear();
 
 # verify that get_logins does the right internal sequence:
 my $entries = $kph->get_logins('WWW-KeePassHttp');
-like $entries->[0]->{Name}, qr/^WWW-KeePassHttp$/, 'correct title (entry name)';
-like $entries->[0]->{Login}, qr/^developer$/, 'correct username (login)';
-like $entries->[0]->{Password}, qr/^secret$/, 'correct password';
+like $entries->[0]->url, qr/^WWW-KeePassHttp$/, 'correct entry url';
+like $entries->[0]->name, qr/^WWW-KeePassHttp$/, 'correct entry name (alias of url)';
+like $entries->[0]->login, qr/^developer$/, 'correct entry username (login)';
+like $entries->[0]->password, qr/^secret$/, 'correct entry password';
+like $entries->[0]->uuid, qr/^27AC492F460EE04E8341125467C09164$/, 'correct entry UUID';
 
 # make sure that call to get_logins had the correct arguments
 test_next_get_params($mock->next_call(), 'get-logins', GET_URL => 'http://localhost:19455', RequestType => 'get-logins', Id => 'WWW::KeePassHttp', Url => "\0WWW-KeePassHttp", SubmitUrl => "\0WWW::KeePassHttp");
@@ -143,7 +145,6 @@ test_next_get_params($mock->next_call(), 'set-login', GET_URL => 'http://localho
 $mock->clear();
 
 
-done_testing(39);
-
+done_testing(41);
 
 __END__

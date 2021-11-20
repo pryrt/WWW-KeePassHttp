@@ -30,8 +30,10 @@ WWW::KeePassHttp - Interface with KeePass PasswordSafe through the KeePassHttp p
 
     my $kph = WWW::KeePassHttp->new(Key => $key);
     $kph->associate() unless $kph->test_associate();
-    my $entries = $kph->get_logins($search_string);
-    print "$_ => $entries->[0]{$_}\n" for qw/Name Login Password/;
+    my @entries = @${ $kph->get_logins($search_string) };
+    print $entry[0]->url;
+    print $entry[0]->login;
+    print $entry[0]->password;
 
 =head1 DESCRIPTION
 
@@ -239,15 +241,18 @@ sub associate
 
 =item get_logins
 
-    my $entries = $kph->get_logins($search_string);
-    print "$_ => $entries->[0]{$_}\n" for qw/Name Login Password/;
+    my @entries = @${ $kph->get_logins($search_string) };
+    print $entry[0]->url;
+    print $entry[0]->login;
+    print $entry[0]->password;
 
 Sends the C<get-logins> request, which returns the Name,
 Login, and Password for each of the matching entries.
 
-C<$entries> is an AoH structure: it is an array reference,
-and each element of that array is a hash reference; each
-referenced hash includes Name, Login, and Password entries.
+C<$entries> is an array reference containing
+L<WWW::KeePassHttp::Entry> objects, from which you can
+extract the url/name, login, and password for each matched
+entry.
 
 The rules for the matching of the search string are defined in the
 L<KeePassHttp plugin documentation|https://github.com/pfn/keepasshttp/>.
@@ -269,6 +274,8 @@ sub get_logins
         for my $k ( sort keys %$entry ) {
             $entry->{$k} = $self->{cbc}->decrypt( decode_base64($entry->{$k}), $self->{key}, decode_base64($content->{Nonce}));
         }
+        $entry->{Url} = $entry->{Name};
+        $entry = WWW::KeePassHttp::Entry->new( %$entry );
     }
     #$dumpfn->( { Entries => $entries } );
     return $entries;
@@ -309,6 +316,8 @@ sub get_logins_count
 =item set_login
 
     $kph->set_login( Login => $username, Url => $url_and_title, Password => $password );
+    # or
+    $kph->set_login( $entry );
 
 Sends the C<set-login> request, which adds a new entry to your
 KeePass database, in the "KeePassHttp Passwords" group (folder).
@@ -323,7 +332,8 @@ or just its documentation, or my interpretation of that documentation.
 The arguments to the method define the C<Login> (username), C<Url> (for
 entry title and URL field), and C<Password> (secret value) for the new
 entry.  All three of those parameters are required by the protocol, and
-thus by this method.
+thus by this method.  Alernately, you can just pass it a L<WWW::KeePassHttp::Entry>
+object as the single argument.
 
 If you would prefer not to give one or more of those parameters a value,
 just pass an empty string.  You could afterword then manually access
@@ -333,7 +343,8 @@ your KeePass database and edit the entry yourself.
 
 sub set_login
 {
-    my ($self, %args) = @_;
+    my ($self, @rest) = @_;
+    my %args = UNIVERSAL::isa($rest[0], 'WWW::KeePassHttp::Entry') ? (%{$rest[0]}) : (@rest);
     croak "set_login(): missing Login parameter" unless defined $args{Login};
     croak "set_login(): missing Url parameter" unless defined $args{Url};
     croak "set_login(): missing Password parameter" unless defined $args{Password};
