@@ -53,7 +53,8 @@ L<WWW::KeePassHttp> will do this for you when you grab entries.
 Or you can create a new Entry object when you want to L<set_login|WWW::KeePassHttp/set_login>
 
 Url, Login, and Password are all required to be defined.  If you want those fields "empty",
-just use an emtpy string C<''> as the value.
+just use an emtpy string C<''> as the value.  The Uuid will also be returned from an existing
+Entry from the database (but will be ignored )
 
 =cut
 
@@ -65,16 +66,21 @@ sub new
     $self->{Url} = $opts{Url}; die "missing Url" unless defined $self->{Url};
     $self->{Login} = $opts{Login}; die "missing Login" unless defined $self->{Login};
     $self->{Password} = $opts{Password}; die "missing Password" unless defined $self->{Password};
+    $self->{Password} = $opts{Uuid} // ''; # Uuid is not required
 
     return $self;
 }
 
 =item url
 
+=item name
+
     print $entry->url();
+    print $entry->name();               # gives same result as ->url()
     $entry->url('https://new.url/');    # set new value
 
-The getter/setter for the Url of the Entry.
+The getter/setter for the Url of the Entry.  Due to the nomenclature of the KeePassHttp plugin's
+C<get-logins> structure, the Url can also be accessed as the Name of the entry.
 
 =cut
 
@@ -84,6 +90,8 @@ sub url
     $self->{Url} = $val if defined $val;
     return $self->{Url};
 }
+
+*WWW::KeePassHttp::name = \&WWW::KeePassHttp::url;
 
 =item login
 
@@ -115,6 +123,21 @@ sub password
     my ($self, $val) = @_;
     $self->{Password} = $val if defined $val;
     return $self->{Password};
+}
+
+=item uuid
+
+    print $entry->uuid();                   # the UUID from the database entry
+
+The getter for the UUID of the Entry.
+
+=cut
+
+sub uuid
+{
+    my ($self, $val) = @_;
+    $self->{Uuid} = $val if defined $val;
+    return $self->{Uuid};
 }
 
 =back
