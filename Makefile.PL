@@ -39,6 +39,11 @@ use ExtUtils::MakeMaker;
             },
         },
         keywords => [ 'KeePass', 'KeePassHttp'],
+        provides => {
+            # versions will be added below, when I parse VERSION_FROM
+            'WWW::KeePassHttp' => { file => 'lib/WWW/KeePassHttp.pm' },
+            'WWW::KeePassHttp::Entry' => { file => 'lib/WWW/KeePassHttp/Entry.pm' },
+        },
     },
     'LICENSE' => 'perl_5',          # EUMM 6.31
     'MIN_PERL_VERSION' => '5.12.0', # EUMM 6.48
@@ -69,14 +74,11 @@ use ExtUtils::MakeMaker;
         delete $mm_args{META_MERGE};
     } else {
         # automatically determine the versions for 'provides'; MM->parse_version exists as of MM v6.31, so not a problem with >= 6.46
-        #   => this comes out right when printed... but MYMETA.* shows values that look wrong
         my $v = MM->parse_version( $mm_args{VERSION_FROM} );
-        $mm_args{META_MERGE}{provides} = {
-            'WWW::KeePassHttp' => {
-                file => 'lib/WWW/KeePassHttp.pm',
-                version => $v,
-            },
-        };
+        for my $k ( keys %{ $mm_args{META_MERGE}{provides} } )
+        {
+            $mm_args{META_MERGE}{provides}{$k}{version} = $v;
+        }
     }
 
     if( $ExtUtils::MakeMaker::VERSION < '6.31' ) {
@@ -132,7 +134,7 @@ distauthtest :: disttest
 # auto-populate the VERSION in the submodules from $(VERSION), which comes from main module
 populateversion :: lib/WWW/KeePassHttp.pm
 	$(NOECHO) $(ECHO) want to auto-populate VERSION in all sub-modules: $(VERSION)
-#	$(PERL) -pi -e "s/^(\s*our\s+.VERSION\s*=).*?;.*?$$/\1 '$(VERSION)'; # auto-populated from W:KPH/" lib/WWW/KeePassHttp/Notepad.pm lib/WWW/KeePassHttp/Editor.pm
+	$(PERL) -pi -e "s/^(\s*our\s+.VERSION\s*=).*?;.*?$$/\1 '$(VERSION)'; # auto-populated from W:KPH/" lib/WWW/KeePassHttp/Entry.pm
 
 #config :: populateversion
 #	$(NOECHO) $(NOOP)

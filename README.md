@@ -8,8 +8,10 @@ WWW::KeePassHttp - Interface with KeePass PasswordSafe through the KeePassHttp p
 
     my $kph = WWW::KeePassHttp->new(Key => $key);
     $kph->associate() unless $kph->test_associate();
-    my $entries = $kph->get_logins($search_string);
-    print "$_ => $entries->[0]{$_}\n" for qw/Name Login Password/;
+    my @entries = @${ $kph->get_logins($search_string) };
+    print $entry[0]->url;
+    print $entry[0]->login;
+    print $entry[0]->password;
 
 # DESCRIPTION
 

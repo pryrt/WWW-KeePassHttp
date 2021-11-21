@@ -11,7 +11,7 @@ use MIME::Base64;
 use Carp;
 use WWW::KeePassHttp::Entry;
 
-our $VERSION = '0.010';  # rrr.mmmsss : rrr is major revision; mmm is minor revision; sss is sub-revision (new feature path or bugfix); optionally use _sss instead, for alpha sub-releases
+our $VERSION = '0.020';  # rrr.mmmsss : rrr is major revision; mmm is minor revision; sss is sub-revision (new feature path or bugfix); optionally use _sss instead, for alpha sub-releases
 
 my $dumpfn;
 BEGIN {
