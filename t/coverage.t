@@ -29,6 +29,10 @@ my @series = (
         content  => "{\"RequestType\":\"get-logins\",\"Success\":true,\"Id\":\"WWW::KeePassHttp\",\"Count\":0,\"Version\":\"1.8.4.2\",\"Hash\":\"91dfdf648925fa42f69f1dbe3b012afcc43aca42\",\"Nonce\":\"AqvxYWMArZTbRoZcU+a21Q==\",\"Verifier\":\"rl6RCAhGIvGdNB5J/6Yo5p5+8c3K/6Yg9sK3G2CXysw=\",\"Entries\":[{\"Login\":\"URDpgbTnHWZfMd9mddik3Q==\",\"Password\":\"k0krqs1+W2mc3QBJP01Z5w==\",\"Uuid\":\"BmcYDdjoivBoG3dYozsaqOkJuBeZMQYKeQjnND+Xjfzzr/d/UPD0/QsuDcvj2ZnF\",\"Name\":\"AfeSGKHYGqtslglqqzKo7Q==\"}]}",
         success => 1,
     },
+    {
+        content  => "{\"RequestType\":\"set-login\",\"Success\":true,\"Id\":\"WWW::KeePassHttp\",\"Count\":0,\"Version\":\"1.8.4.2\",\"Hash\":\"91dfdf648925fa42f69f1dbe3b012afcc43aca42\",\"Nonce\":\"gSJXXhByYIhc6zpnbG8FpA==\",\"Verifier\":\"S5PbXFEtbVwsXcBjYMM1EurG+7XsfcN2NI2R/Clunho=\"}",
+        success => 1,
+    },
 );
 $mock->set_series( get => @series );
 
@@ -91,6 +95,15 @@ $mock->clear();
 my $ret = $kph->get_logins('WWW-KeePassHttp', SubmitUrl => 'alternative');
 is_deeply $ret, [], 'get-logins: retval with no count';
 $mock->clear();
+
+# set_login with Entry object
+use WWW::KeePassHttp::Entry;
+my $entry = WWW::KeePassHttp::Entry->new(
+        Login => 'coverage.t.username',
+        Url => 'coverage.t.url',
+        Password => 'coverage.t.password',
+);
+ok $kph->set_login($entry), 'set-login: use entry object';
 
 done_testing();
 
