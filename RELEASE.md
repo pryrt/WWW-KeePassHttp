@@ -1,13 +1,12 @@
 [![](https://img.shields.io/cpan/v/WWW-KeePassHttp.svg?colorB=00CC00 "metacpan")](https://metacpan.org/pod/WWW::KeePassHttp)
 [![](http://cpants.cpanauthors.org/dist/WWW-KeePassHttp.png "cpan testers")](http://matrix.cpantesters.org/?dist=WWW-KeePassHttp)
 [![](https://img.shields.io/github/release/pryrt/WWW-KeePassHttp.svg "github release")](https://github.com/pryrt/WWW-KeePassHttp/releases)
-[![](https://img.shields.io/github/issues/pryrt/WWW-KeePassHttp.svg "issues")](https://github.com/pryrt/WWW-KeePassHttp/issues)
-[![](https://ci.appveyor.com/api/projects/status/6gv0lnwj1t6yaykp/branch/master?svg=true "build status")](https://ci.appveyor.com/project/pryrt/WWW-KeePassHttp)
+[![](https://coveralls.io/repos/github/pryrt/WWW-KeePassHttp/badge.svg?branch=main "coverage")](https://coveralls.io/github/pryrt/WWW-KeePassHttp?branch=main)
+[![](https://github.com/pryrt/WWW-KeePassHttp/actions/workflows/perl-ci.yml/badge.svg "issues")](https://github.com/pryrt/WWW-KeePassHttp/actions/)
 
 # Releasing WWW::KeePassHttp
 
 This describes some of my methodology for releasing a distribution.
-Eventually will set up AppVeyor and/or GitHub Actions
 
 ## My Methodology
 
