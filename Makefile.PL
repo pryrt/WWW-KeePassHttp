@@ -88,18 +88,18 @@ use ExtUtils::MakeMaker;
         delete $mm_args{MIN_PERL_VERSION};
     }
     if( $ExtUtils::MakeMaker::VERSION < '6.52' ) {
-        $mm_args{PREREQ_PM} = (
+        $mm_args{PREREQ_PM} = {
             $mm_args{TEST_REQUIRES},
             $mm_args{CONFIGURE_REQUIRES},
             $mm_args{PREREQ_PM},
-        ) if exists $mm_args{PREREQ_PM};            # merge TEST and CONFIG into PREREQ
+        } if exists $mm_args{PREREQ_PM};            # merge TEST and CONFIG into PREREQ
         delete $mm_args{CONFIGURE_REQUIRES};
-    }
-    if( $ExtUtils::MakeMaker::VERSION < '6.64' ) {
-        $mm_args{CONFIGURE_REQUIRES} = (
+        delete $mm_args{TEST_REQUIRES};
+    } elsif( $ExtUtils::MakeMaker::VERSION < '6.64' ) {
+        $mm_args{CONFIGURE_REQUIRES} = {
             $mm_args{TEST_REQUIRES},
             $mm_args{CONFIGURE_REQUIRES},
-        ) if exists $mm_args{CONFIGURE_REQUIRES};   # merge TEST into CONFIG
+        } if exists $mm_args{CONFIGURE_REQUIRES};   # merge TEST into CONFIG
         delete $mm_args{TEST_REQUIRES};
     }
     if( $ExtUtils::MakeMaker::VERSION >= '6.18' ) {
