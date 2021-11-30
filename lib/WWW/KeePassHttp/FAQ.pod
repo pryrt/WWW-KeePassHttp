@@ -1,0 +1,158 @@
+=pod
+
+=encoding utf8
+
+=head1 NAME
+
+WWW::KeePassHttp::FAQ - Answers to Anticipated or Frequently Asked Questions
+
+=head1 FAQ
+
+=over
+
+=item I<How secure is this module?>
+
+I don't know.  I am not a security expert.  This distribution is a wrapper around the KeePassHttp plugin, so it is primarily limited by the design of that plugin.
+
+Except for the L<C<associate()> method|WWW::KeePassHttp/"associate">, all data (including password, username, and URL) is transmitted AES-256 encoded using L<Crypt::Cipher::AES> through L<Crypt::Mode::CBC>.
+
+The C<associate()> communication seems insecure to me, since KeePassHttp plugin is not using HTTPS. Every other communication between your application and the plugin uses the key (which both your application and the plugin know) to encrypt the critical data (usernames, passwords, titles, etc), and is thus secure; but the C<associate()> interaction, because it happens before the plugin has your key, by its nature cannot be encrypted by that key, so it sends the base64-encoded key unencrypted. If this worries you, I suggest that you manually insert the key: do an assocate once with a dummy key, then manually overwrite the base64-encoded key that it stores with the encoded version of your real key. (This limitation is due to the design of the KeePassHttp plugin and its protocol for the associate command, not due to the wrapper around that protocol that this module implements.)
+
+=item I<How do I get a key?>
+
+You have to generate one as a series of 32 random bytes (with a cryptographically secure random number generator).  For a given application, you will generate the key one time, and then always use that same key every time you run the application.
+
+Here's a command-line call to openssl that can generate 64 hex nibbles, which you can translate into the 32 bytes:
+
+    openssl enc -aes-256-cbc -k "some secret here" p_ -md sha256 -pbkdf2 -iter 100000 -nosalt
+
+Here's that same an example of how I used that command inside Strawberry Perl, using their supplied C<openssl.exe>, and L<IPC::Open3> for calling the executable:
+
+    use warnings;
+    use strict;
+    use IPC::Open3;
+
+    sub deterministic_user_key
+    {
+        # generates the binary key for this user using openssl
+        # and, in list context, also returns the base64 version of the key
+        my $openssl = ($^X =~ s/perl.bin.perl.exe//ir =~ s{\\}{/}gir) . 'c/bin/openssl.exe';
+        my $pid = open3(my $fi, my $fo, undef,  # stdin, stdout, stderr==stdout
+            $openssl
+            => enc
+            => '-aes-256-cbc'
+            => -k => "some secret here"
+            => -P
+            => -md => sha256
+            => -pbkdf2
+            => -iter => 100000
+            => -nosalt
+            =>
+        ); # used all => to require fewer quotes in the call
+        my $slurp = do { local $/; <$fo> };
+        my ($hkey) = ($slurp =~ m/key=(\w+)/);
+        return pack 'H*', $hkey;
+    }
+    my $KEY = deterministic_user_key();
+
+=item I<How to I securely store that key?>
+
+Right, I know, great question.  I mean, it's not like you can store the key in KeePass because then you would need a I<second> key to access the first, and then ... in that loop lies madness.
+
+Well, for interactive applications, you I<could> just store it in KeePass, because you can manually supply the key when you want to run the application.  But that won't work if you're trying to use this distribution to make an automated tool that can run non-interactively in the background, but only while you are logged in and have the KeePass database unlocked (that's what I wrote this distrbution to help with, after all).
+
+So, what I figured out to do (and there may be better or different ways): Since you're using KeePass already, you can make use of its L<Triggers and Actions|https://keepass.info/help/v2/triggers.html>.  You will have an encrypted file containing the key; you will have a KeePass Trigger when it opens/unocks your password database which will decrypt the encrypted file; you will have a second Trigger when it closes/locks your password database that will encrypt the decrypted file (or delete the decrypted copy if the encrypted copy is always there).  As long as you only leave your KeePass database unlocked when you feel "safe" (no other users on your machine, or logged onto a single-user machine, or what have you), the secret key's file will only be unencrypted at times when KeePass is unlocked, so the unencrypted key seems as safe as your other passwords.  I<(Caveat: I am not a security expert.  If security is paramount, make sure a security expert is handling your security, not some random person or examples on the internet.)>
+
+I will show an outline of what I've done using C<gpg> to do a symmetric encryption of the key file:
+
+=begin comment
+
+4) Create Trigger MyAppsKeyUnlock:
+     * Properties: enabled, initially on
+     * Events: Opened database file
+         comparison = contains
+         filter = name of my database
+     * Conditions: if A (URL) exists but U (USERNAME) does not:
+         File exists = {REF:A@T:MyAppsKey}
+         File exists = NOT, {REF:U@T:MyAppsKey}
+     * Action: Execute Command:
+         file/URL = c:\usr\local\apps\berrybrew\perls\system\perl\bin\perl.exe
+         arguments = -MIPC::Open2 -e "exit if -f $ARGV[1]; my $pid=open2('>&STDERR', my $fi, qw/gpg --batch --decrypt --passphrase-fd 0 --output/, @ARGV[1..2]); print {$fi} $ARGV[0], qq(\n); waitpid($pid,0); my $s=$?>>8; print STDERR qq(pid $pid exit with status=$s\n);" {REF:P@T:MyAppsKey} "{REF:U@T:MyAppsKey}" "{REF:A@T:MyAppsKey}"
+         window = hidden
+5) Create Trigger MyAppsKeyLock:
+    * Properties: enabled, initially on
+    * Events: Closing after saving
+        comparison = contains
+        filter = name of my database
+    * Conditions: if U (USERNAME) exists
+        File exists = {REF:U@T:MyAppsKey}
+    * Action: Execute Command
+        file/url = %windir%\system32\cmd.exe
+        arguments = /C del {REF:U@T:MyAppsKey}
+        window = hidden
+
+=end comment
+
+=over
+
+=item 1. Create a file which contains only the 32 bytes for the key as C<c:\path\secret.bin>
+
+=item 2. Encrypt that file with a password.  Maybe something like the command line
+
+    gpg --armor --symmetric --output c:\path\secret.asc c:\path\secret.bin
+
+Keep whatever password you used when you generated the encrypted file.
+
+You can (for now) delete the C<c:\path\secret.bin> ... once you start running the triggers
+
+=item 3. Create a new entry in KeePass
+
+    * NAME = MyAppsKey
+    * USERNAME = c:\path\secret.bin
+        (the location for the _unencrypted_ secret-containing file)
+    * PASSWORD = the password from step 2
+    * URL = c:\path\secret.asc
+        (the location for the _encrypted_ secret-containing file)
+
+=item 4. Create a trigger called "MyAppsKeyUnlock"
+
+    * Properties: enabled, initially on
+    * Events: Opened database file
+        comparison = contains
+        filter = name of my database
+    * Conditions: if A (URL) exists but U (USERNAME) does not:
+        File exists = {REF:A@T:MyAppsKey}
+        File exists = NOT, {REF:U@T:MyAppsKey}
+    * Action: Execute Command:
+        file/URL = c:\strawberry\bin\perl.exe
+        arguments = -MIPC::Open2 -e "exit if -f $ARGV[1]; my $pid=open2('>&STDERR', my $fi, qw/gpg --batch --decrypt --passphrase-fd 0 --output/, @ARGV[1..2]); print {$fi} $ARGV[0], qq(\n); waitpid($pid,0); my $s=$?>>8; print STDERR qq(pid $pid exit with status=$s\n);" {REF:P@T:MyAppsKey} "{REF:U@T:MyAppsKey}" "{REF:A@T:MyAppsKey}"
+        window = hidden
+
+This will run perl to run gpg to decrypt the keyfile every time you unlock your database.  (I wanted to use a simpler C<echo {REF:password} | gpg ...>), but that didn't get the newlines correct on the password, so gpg wouldn't decrypt the file.)  Since gpg doesn't delete the encrypted file, you now have both C<secret.asc> and C<secret.bin> on your drive.
+
+=item 5. Create a trigger called "MyAppsKeyLock"
+
+    * Properties: enabled, initially on
+    * Events: Closing databse (after saving)
+        comparison = contains
+        filter = name of my database
+    * Conditions: if U (USERNAME) exists
+        File exists = {REF:U@T:MyAppsKey}
+    * Action: Execute Command
+        file/url = %windir%\system32\cmd.exe
+        arguments = /C del {REF:U@T:MyAppsKey}
+        window = hidden
+
+This deletes C<secret.bin> (if it exists) every time you lock your database.
+
+=back
+
+After you have saved both those triggers, every time you unlock your password database, the key will be unencrypted; and every time you lock, it will get rid of the decrypted copy.  Thus, your non-interactive program can just grab the contents of C<secret.bin> if it exists, and use that for the key for communicating with KeePassHttp through this module.  When the database is locked, the key file won't exist, so you should have your application script exit, or at least wait until the next time the file is there before moving forward with its use of this module for getting other keys.
+
+=for comment END OF Trigger numbered items
+
+=back
+
+=for comment END OF FAQ items
+
+=cut
